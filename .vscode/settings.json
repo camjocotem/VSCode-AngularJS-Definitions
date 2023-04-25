@@ -1,0 +1,18 @@
+{
+	"editor.insertSpaces": false,
+	"typescript.tsc.autoDetect": "off",
+	"typescript.preferences.quoteStyle": "single",
+	"editor.codeActionsOnSave": {
+		"source.fixAll.eslint": true
+	},
+	"[javascript]": {
+		"editor.suggest.showWords": false,
+		"editor.codeLens": true
+	  },
+	  "diffEditor.codeLens": true,
+	  "javascript.referencesCodeLens.enabled": true,
+	  "javascript.referencesCodeLens.showOnAllFunctions": true,
+	  "typescript.referencesCodeLens.enabled": true,
+	  "typescript.implementationsCodeLens.enabled": true,
+	  "typescript.referencesCodeLens.showOnAllFunctions": true
+}
