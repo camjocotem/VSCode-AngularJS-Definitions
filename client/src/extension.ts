@@ -11,13 +11,15 @@ import {
 
 let client: LanguageClient;
 
-vscode.workspace.findFiles('**/*.js', '**/node_modules/**').then(jsFiles => {
+vscode.workspace.findFiles('**/*.js', '**/node_modules/**')
+.then(jsFiles => {
   const jsFileUris = jsFiles.map(file => file.toString());
   client.sendNotification('parseJsFiles', jsFileUris);
 });
 
 const GetFileContentRequest = new RequestType<string, string, void>('getFileContent');
-
+const fsWatcher = vscode.workspace.createFileSystemWatcher('**/*.{html,js}')
+const definitionProvider = vscode.languages.registerDefinitionProvider({ language: 'html', scheme: 'file', pattern: '**/*html*' }, goDefinitionProvider)
 
 // New class for the definition provider
 class GoDefinitionProvider implements vscode.DefinitionProvider {
@@ -43,18 +45,10 @@ class GoDefinitionProvider implements vscode.DefinitionProvider {
   }
 }
 
-function kebabCaseToCamelCase(str: string): string {
-  return str.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
-}
-
-function camelCaseToKebabCase(str: string): string {
-  return str.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase();
-}
 
 export function activate(context: vscode.ExtensionContext) {
   // The server is implemented in the server.ts file
   const serverModule = context.asAbsolutePath(path.join("server", "out", "server.js"));
-
   // The debug options for the server
   const debugOptions = { execArgv: ["--nolazy", "--inspect=6009"] };
 
@@ -67,13 +61,13 @@ export function activate(context: vscode.ExtensionContext) {
       transport: TransportKind.ipc,
       options: debugOptions,
     },
-  };
+  };  
 
   // Options to control the language client
   const clientOptions: LanguageClientOptions = {
     documentSelector: [{ language: 'html', scheme: 'file' }],
     synchronize: {
-      fileEvents: vscode.workspace.createFileSystemWatcher('**/*.{html,js}'),
+      fileEvents: fsWatcher,
     },
   };
 
@@ -102,6 +96,8 @@ export function deactivate(): Thenable<void> | undefined {
   if (!client) {
     return undefined;
   }
+
+  fsWatcher.dispose();
 
   // Stop the language client
   return client.stop();
