@@ -8,43 +8,25 @@ import {
   ServerOptions,
   TransportKind,
 } from "vscode-languageclient/node";
+import GoDefinitionProvider from './GoDefinitionProvider';
 
 let client: LanguageClient;
+const eventListenerDisposables: vscode.Disposable[] = [];
 
 vscode.workspace.findFiles('**/*.js', '**/node_modules/**')
 .then(jsFiles => {
   const jsFileUris = jsFiles.map(file => file.toString());
-  client.sendNotification('parseJsFiles', jsFileUris);
+  client.sendNotification('initialFileList', jsFileUris);
 });
 
+
 const GetFileContentRequest = new RequestType<string, string, void>('getFileContent');
-const fsWatcher = vscode.workspace.createFileSystemWatcher('**/*.{html,js}')
-const definitionProvider = vscode.languages.registerDefinitionProvider({ language: 'html', scheme: 'file', pattern: '**/*html*' }, goDefinitionProvider)
+const fsWatcher = vscode.workspace.createFileSystemWatcher('**/*.{html,js}');
+eventListenerDisposables.push(fsWatcher);
 
-// New class for the definition provider
-class GoDefinitionProvider implements vscode.DefinitionProvider {
-  private client: LanguageClient;
-
-  constructor(client: LanguageClient) {
-    this.client = client;
-  }
-
-  public async provideDefinition(
-    document: vscode.TextDocument,
-    position: vscode.Position,
-    token: vscode.CancellationToken
-  ): Promise<vscode.Definition | undefined> {
-    const params = this.client.code2ProtocolConverter.asTextDocumentPositionParams(document, position);
-    const definition = await this.client.sendRequest('textDocument/definition', params, token);
-
-    if (!definition) {
-      return undefined;
-    }
-
-    // return this.client.protocol2CodeConverter.asDefinitionResult(definition);
-  }
-}
-
+const goDefinitionProvider = new GoDefinitionProvider(client);
+const defProv = vscode.languages.registerDefinitionProvider({ language: 'html', scheme: 'file', pattern: '**/*html*' }, goDefinitionProvider);
+eventListenerDisposables.push(defProv);
 
 export function activate(context: vscode.ExtensionContext) {
   // The server is implemented in the server.ts file
@@ -65,9 +47,12 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Options to control the language client
   const clientOptions: LanguageClientOptions = {
-    documentSelector: [{ language: 'html', scheme: 'file' }],
+    documentSelector: [
+      { language: 'html', scheme: 'file' },
+      { language: "javascript", scheme: "file" }
+    ],
     synchronize: {
-      fileEvents: fsWatcher,
+      fileEvents: fsWatcher
     },
   };
 
@@ -84,11 +69,21 @@ export function activate(context: vscode.ExtensionContext) {
     }
   });
 
+  // Register the event listeners and store the disposables
+  eventListenerDisposables.push(
+    vscode.workspace.onDidDeleteFiles((e) => {
+      client.sendNotification('fileDeleted', e.files[0]);
+    }),
+    vscode.workspace.onDidRenameFiles((e) => {
+      client.sendNotification('fileRenamed', {
+        old: e.files[0],
+        new: e.files[1]
+      });
+    })
+  );
+
   client.start().then(() => {
-    const goDefinitionProvider = new GoDefinitionProvider(client);
-    context.subscriptions.push(
-      vscode.languages.registerDefinitionProvider({ language: 'html', scheme: 'file', pattern: '**/*html*' }, goDefinitionProvider)
-    );
+    context.subscriptions.push(defProv);
   });
 }
 
@@ -97,7 +92,7 @@ export function deactivate(): Thenable<void> | undefined {
     return undefined;
   }
 
-  fsWatcher.dispose();
+  eventListenerDisposables.forEach((disposable) => disposable.dispose());
 
   // Stop the language client
   return client.stop();
