@@ -1,9 +1,11 @@
 {
-	"name": "angularjs-go-to-definition",
+	"name": "angular-js-go-to-definition-extension",
+	"displayName": "AngularJS Go To Definition Support",
 	"description": "Enable 'Go to definition' on AngularJS 1.x components",
 	"author": "camjocotem",
 	"license": "MIT",
 	"version": "1.0.3",
+	"icon": "angularjs-logo.png",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/camjocotem/VSCode-AngularJS-Definitions"
