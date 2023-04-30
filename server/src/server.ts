@@ -7,8 +7,6 @@ import {
 	InitializeParams,
 	InitializeResult,
 	Definition,
-	DidChangeTextDocumentParams,
-	DidSaveTextDocumentParams
 } from "vscode-languageserver/node";
 import { RequestType } from 'vscode-jsonrpc';
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -16,13 +14,14 @@ import { getPositionFromOffset, getWordAt } from './helpers';
 
 const connection = createConnection(ProposedFeatures.all);
 const documents = new TextDocuments(TextDocument);
-const memCache = { uris: [] as string[] };
+const memCache = { uris: [] as string[], pathsToExclude: [] as string[] };
 
 function kebabCaseToCamelCase(str: string): string {
 	return str.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
 }
 
 connection.onInitialize((params: InitializeParams): InitializeResult => {
+	console.log("onInitialize", params);
 	return {
 		capabilities: {
 			definitionProvider: true
@@ -65,60 +64,31 @@ connection.onDefinition(async (params: TextDocumentPositionParams): Promise<Defi
 	if (!document) {
 		return undefined;
 	}
-
-	// Get the word under the cursor
 	const word = getWordAt(document, params.position);
-
-	// Convert the word to camelCase and find the corresponding definition in the componentsMap
 	const componentName = kebabCaseToCamelCase(word);
-
 	const definition = componentsMapCache?.get(componentName);
 
 	if(!definition){
-		// If the definition is not found, update the cache and try again
 		componentsMapCache = await parseJsFiles(memCache.uris);
 		return componentsMapCache?.get(componentName);
 	}
 
-
 	return definition;
 });
 
-connection.onDidChangeTextDocument(async (params: DidChangeTextDocumentParams) : Promise<void> => {
-	// Update the cache if a JavaScript file changes
-	console.log("onDidChangeTextDocument", params);
-});
-
-connection.onDidSaveTextDocument(async (params: DidSaveTextDocumentParams) : Promise<void> => {
-	// Update the cache if a JavaScript file changes
-	console.log("onDidSaveTextDocument", params);
-});
-
 connection.onNotification('initialFileList', async (uris: string[]) => {
-	const fileStringsToExclude = [
-		'/node_modules/',
-		'/dist/',
-		'/build/',
-		'/coverage/',
-		'/test/',
-		'/tests/',
-		'/spec/',
-		'/specs/',
-		'/e2e/',
-		'/mock/',
-		'/mocks/',
-		'/lib/'
-	];
-
-	memCache.uris = uris.filter(uri => uri.endsWith('.js') && !fileStringsToExclude.some(str => uri.includes(str)));
+	memCache.uris = uris.filter(uri => uri.endsWith('.js') && !memCache.pathsToExclude.some(str => uri.includes(str)));
 	if (componentsMapCache.size === 0) {
 		componentsMapCache = await parseJsFiles(memCache.uris);
 	}
 });
 
+connection.onNotification('pathsToExcludeUpdated', async (pathsToExclude: string[]) => {
+	memCache.pathsToExclude = pathsToExclude;
+});
+
 connection.onNotification('fileDeleted', async (uri: string) => {
 	memCache.uris = memCache.uris.filter(u => u !== uri);
-	//This is a bit of a hack
 	if (memCache.uris.length > 0) {
 		componentsMapCache = await parseJsFiles(memCache.uris);
 	}

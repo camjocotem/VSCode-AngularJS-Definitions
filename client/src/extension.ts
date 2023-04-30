@@ -57,14 +57,13 @@ export function activate(context: vscode.ExtensionContext) {
   };
 
   // Create the language client and start the client
-  client = new LanguageClient("angularJSDefinitionProvider", "AngularJS Definition Provider", serverOptions, clientOptions);
+  client = new LanguageClient("angularJSGoToDefProvider", "AngularJS Definition Provider", serverOptions, clientOptions);
 
   client.onRequest(GetFileContentRequest, async (uri: string) => {
     try {
       const fileContent = await vscode.workspace.fs.readFile(vscode.Uri.parse(uri));
       return new TextDecoder().decode(fileContent);
     } catch (error) {
-      console.error(`Error reading file content for URI: ${uri}`, error);
       return undefined;
     }
   });
@@ -79,6 +78,15 @@ export function activate(context: vscode.ExtensionContext) {
         old: e.files[0],
         new: e.files[1]
       });
+    }),
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      const config = vscode.workspace.getConfiguration('angularJSGoToDefProvider');
+      if(e.affectsConfiguration('pathsToExclude')){
+        const res = config.get('pathsToExclude');
+        if(res){
+          client.sendNotification('pathsToExcludeUpdated', res);
+        }
+      }
     })
   );
 
@@ -92,7 +100,11 @@ export function deactivate(): Thenable<void> | undefined {
     return undefined;
   }
 
-  eventListenerDisposables.forEach((disposable) => disposable.dispose());
+  eventListenerDisposables.forEach((disposable) => {
+    if(disposable){
+      disposable.dispose();
+    }
+  });
 
   // Stop the language client
   return client.stop();

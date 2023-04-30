@@ -1,37 +1,35 @@
-# LSP Example
+# AngularJS Go to Definition Extension
 
-Heavily documented sample code for https://code.visualstudio.com/api/language-extensions/language-server-extension-guide
+This extension provides `Go to definition` support for custom AngularJS directives or components in your HTML files, making it easier for you to navigate through your project and improve your productivity.
 
-## Functionality
+## Features
 
-This Language Server works for plain text file. It has the following language features:
-- Completions
-- Diagnostics regenerated on each file change or configuration change
+- Quickly navigate to the JavaScript file containing the definition of the custom directive or component.
+- Supports HTML and JavaScript files.
 
-It also includes an End-to-End test.
+## Installation
 
-## Structure
+1. Install the extension from the Visual Studio Code marketplace.
+2. Reload Visual Studio Code.
 
-```
-.
-├── client // Language Client
-│   ├── src
-│   │   ├── test // End to End tests for Language Client / Server
-│   │   └── extension.ts // Language Client entry point
-├── package.json // The extension manifest.
-└── server // Language Server
-    └── src
-        └── server.ts // Language Server entry point
-```
+## Usage
 
-## Running the Sample
+- Right-click on a custom directive or component in an HTML file and select `Go to Definition.`
+- Alternatively, press `F12` when the cursor is on a custom directive or component.
+- You can also use `Ctrl+Click` or `Right-Click` then select `Go to Definition.`
 
-- Run `npm install` in this folder. This installs all necessary npm modules in both the client and server folder
-- Open VS Code on this folder.
-- Press Ctrl+Shift+B to start compiling the client and server in [watch mode](https://code.visualstudio.com/docs/editor/tasks#:~:text=The%20first%20entry%20executes,the%20HelloWorld.js%20file.).
-- Switch to the Run and Debug View in the Sidebar (Ctrl+Shift+D).
-- Select `Launch Client` from the drop down (if it is not already).
-- Press ▷ to run the launch config (F5).
-- In the [Extension Development Host](https://code.visualstudio.com/api/get-started/your-first-extension#:~:text=Then%2C%20inside%20the%20editor%2C%20press%20F5.%20This%20will%20compile%20and%20run%20the%20extension%20in%20a%20new%20Extension%20Development%20Host%20window.) instance of VSCode, open a document in 'plain text' language mode.
-  - Type `j` or `t` to see `Javascript` and `TypeScript` completion.
-  - Enter text content such as `AAA aaa BBB`. The extension will emit diagnostics for all words in all-uppercase.
+## Customization
+
+### Excluding paths
+
+To improve performance and reduce "noise", you may want to exclude certain paths from being searched for custom directives or components. It's recommended to exclude the `node_modules` folder at the very least.
+
+To exclude paths, you can update your extension settings in Visual Studio Code.
+
+## Support & Donations
+
+If you find this extension helpful and want to support continued development, consider making a donation using the PayPal button below. Your support is greatly appreciated! 🚀💙
+
+[![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_LG.gif)](https://www.paypal.com/donate/?hosted_button_id=6P2P7Y4XEQA6E)
+
+Thank you for using the AngularJS Go to Definition extension!
