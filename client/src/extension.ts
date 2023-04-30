@@ -83,7 +83,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   client.start().then(() => {
-    context.subscriptions.push(defProv);
+    context.subscriptions.push(defProv, ...eventListenerDisposables);
   });
 }
 
