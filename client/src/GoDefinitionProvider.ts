@@ -15,11 +15,7 @@ export default class GoDefinitionProvider implements vscode.DefinitionProvider {
 		position: vscode.Position,
 		token: vscode.CancellationToken
 	): Promise<vscode.Definition | undefined> {
-		const params = this.client.code2ProtocolConverter.asTextDocumentPositionParams(document, position);
-		const definition = await this.client.sendRequest('textDocument/definition', params, token);
-
-		if (!definition) {
-			return undefined;
-		}
+		this.client.code2ProtocolConverter.asTextDocumentPositionParams(document, position);
+		return undefined;
 	}
 }

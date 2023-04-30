@@ -13,13 +13,6 @@ import GoDefinitionProvider from './GoDefinitionProvider';
 let client: LanguageClient;
 const eventListenerDisposables: vscode.Disposable[] = [];
 
-vscode.workspace.findFiles('**/*.js', '**/node_modules/**')
-.then(jsFiles => {
-  const jsFileUris = jsFiles.map(file => file.toString());
-  client.sendNotification('initialFileList', jsFileUris);
-});
-
-
 const GetFileContentRequest = new RequestType<string, string, void>('getFileContent');
 const fsWatcher = vscode.workspace.createFileSystemWatcher('**/*.{html,js}');
 eventListenerDisposables.push(fsWatcher);
@@ -71,27 +64,46 @@ export function activate(context: vscode.ExtensionContext) {
   // Register the event listeners and store the disposables
   eventListenerDisposables.push(
     vscode.workspace.onDidDeleteFiles((e) => {
-      client.sendNotification('fileDeleted', e.files[0]);
+      refreshPathMappings();
     }),
     vscode.workspace.onDidRenameFiles((e) => {
-      client.sendNotification('fileRenamed', {
-        old: e.files[0],
-        new: e.files[1]
-      });
+      refreshPathMappings();
+    }),
+    vscode.workspace.onDidChangeTextDocument((e) => {
+      // refreshPathMappings();      
+      client.sendNotification('fileChange', e.document.uri.toString());
     }),
     vscode.workspace.onDidChangeConfiguration((e) => {
-      const config = vscode.workspace.getConfiguration('angularJSGoToDefProvider');
       if(e.affectsConfiguration('pathsToExclude')){
-        const res = config.get('pathsToExclude');
-        if(res){
-          client.sendNotification('pathsToExcludeUpdated', res);
-        }
+        refreshPathMappings();
       }
     })
   );
 
   client.start().then(() => {
+    refreshPathMappings();
     context.subscriptions.push(defProv, ...eventListenerDisposables);
+  });
+}
+
+function refreshPathMappings(){
+  vscode.workspace.findFiles('**/*.js', '**/node_modules/**')
+  .then((jsFiles:vscode.Uri[]) => {
+    let jsFileUris = jsFiles.map(file => file.toString());      
+    const config = vscode.workspace.getConfiguration('angularJSGoToDefProvider');
+    const res: string[] = config.get('pathsToExclude');    
+
+    if(res.length > 0){
+      const excludePatterns = res.map(str => str.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')).join('|');
+      const regex = new RegExp(`^(?!.*(${excludePatterns})).*\\.js$`, 'i');
+      
+      jsFileUris = jsFileUris.filter(uri => regex.test(uri));      
+    }
+    else{
+      jsFileUris.filter(uri => uri.endsWith('.js'));
+    }
+
+    client.sendNotification('setFileList', jsFileUris);
   });
 }
 
