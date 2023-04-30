@@ -3,7 +3,7 @@
 	"description": "Enable 'Go to definition' on AngularJS 1.x components",
 	"author": "camjocotem",
 	"license": "MIT",
-	"version": "0.0.1",
+	"version": "1.0.3",
 	"publisher": "vscode",
 	"repository": {
 		"type": "git",
