@@ -13,7 +13,8 @@
 			"skipFiles": [
 				"<node_internals>/**",
 				"${workspaceFolder}/node_modules/**/*.js",
-				"extensionHostProcess.js"
+				"extensionHostProcess.js",
+				"htmlClientMain.js"
 			],
 			"preLaunchTask": {
 				"type": "npm",
@@ -39,7 +40,8 @@
 			"skipFiles": [
 				"<node_internals>/**",
 				"${workspaceFolder}/node_modules/**/*.js",
-				"extensionHostProcess.js"
+				"extensionHostProcess.js",
+				"htmlClientMain.js"
 			],
 			"type": "node"
 		},

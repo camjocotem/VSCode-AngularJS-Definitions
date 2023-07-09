@@ -100,6 +100,7 @@ connection.onDefinition(async (params: TextDocumentPositionParams): Promise<Defi
 
 connection.onNotification('setFileList', async (uris: string[]) => {
 	memCache.uris = uris;
+	componentsMapCache = new Map<string, Definition>();
 	componentsMapCache = await parseJsFiles(memCache.uris);
 });
 

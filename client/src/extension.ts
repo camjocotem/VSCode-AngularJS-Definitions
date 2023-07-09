@@ -70,7 +70,9 @@ export function activate(context: vscode.ExtensionContext) {
       refreshPathMappings();
     }),
     vscode.workspace.onDidChangeTextDocument((e) => {
-      // refreshPathMappings();      
+      if(e.document.uri.path.match('settings.json')){
+        refreshPathMappings();
+      }
       client.sendNotification('fileChange', e.document.uri.toString());
     }),
     vscode.workspace.onDidChangeConfiguration((e) => {
